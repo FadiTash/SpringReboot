@@ -1,21 +1,43 @@
 import express = require("express"); 
-export const container: {[key: string]: any} = {
 
-};
+class Container {
+    public content: {[key: string]: any} = {};
+    public constructor() {
 
-export function bean (target: any) {
-    var original = target;
-  
-    var f : any = function (...args: any[]) {
-      let x = new original(args);
-      container[target.name] = x;
-      return x;
     }
-   
-    f.prototype = original.prototype;
-    return f;
+
+    public set(iName: string, Ob: any) {
+        if (this.content[iName]) {
+            throw new Error("This item " + iName + " already exists as an Application scoped object");
+        }
+        this.content[iName] = Ob;        
+    }
+
+    public get(iName: string): any {
+        if (this.content[iName] === undefined) {
+            throw new Error ("Asset " + iName + " could not be aquired");
+        }
+        return this.content[iName];
+    }
+
+    public getAs<T>(iName: string): T {
+        if (this.content[iName] === undefined) {
+            throw new Error ("Asset " + iName + " could not be aquired");
+        }
+        return (this.content[iName] as T);
+    } 
+
 }
 
+export const container = new Container();
+
+export function ApplicationScope(iName?: string) {
+    return function(target: any) {
+        iName = iName || target.name;
+        iName = iName || "";
+        container.set(iName, new target());
+    }
+}
 
 class Spring {
     public app: express.Application = express();
@@ -37,7 +59,8 @@ class Spring {
 enum RequestMethod {
     Get = 'get',
     Post = 'post',
-    Delete = 'delete'
+    Delete = 'delete',
+    Put = 'put'
 }
 
 export const springContainer = new Spring();
@@ -64,27 +87,15 @@ export function Request(
 
 export function Get(route: string) {
     return Request(RequestMethod.Get, route);
-    /* return function (target: any, name: string, pd: PropertyDescriptor) {
-        const app = springContainer.app;
-        if (app !== undefined) {
-            console.log("registered " + route);
-            app.get(route, target[name]);
-        }
-    } */
 }
 
 export function Post(route: string) {
-  return function (target: any, name: string, pd: PropertyDescriptor) {
-      const app = springContainer.app;
-      if (app !== undefined) {
-          console.log("registered " + route);
-          app.post(route, target[name]);
-      }
-  }
+  return Request(RequestMethod.Post, route);
 }
 
 export interface ISpringApplication {
     port: number;
+    ssl?: {[key: string] : string}
 }
 
 export function use(target: any) {

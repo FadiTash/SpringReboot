@@ -34,6 +34,12 @@ class Spring {
     }
 }
 
+enum RequestMethod {
+    Get = 'get',
+    Post = 'post',
+    Delete = 'delete'
+}
+
 export const springContainer = new Spring();
 
 export function Application(target: any) {
@@ -43,14 +49,28 @@ export function Application(target: any) {
 export function Controller(target: any) {
 }
 
+export function Request(
+         method: RequestMethod,
+         route: string
+       ) {
+        return function (target: any, name: string, pd: PropertyDescriptor) {
+           const app = springContainer.app;
+           if (app !== undefined) {
+             console.log("registered " + route);
+             app[method](route, target[name]);
+           }
+       }
+    }
+
 export function Get(route: string) {
-    return function (target: any, name: string, pd: PropertyDescriptor) {
+    return Request(RequestMethod.Get, route);
+    /* return function (target: any, name: string, pd: PropertyDescriptor) {
         const app = springContainer.app;
         if (app !== undefined) {
             console.log("registered " + route);
             app.get(route, target[name]);
         }
-    }
+    } */
 }
 
 export function Post(route: string) {

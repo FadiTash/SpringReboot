@@ -4,18 +4,38 @@ import {Application, ISpringApplication, Controller, Get, use, Post, container, 
 
 
 
-// @Application
-// class MyApplication implements ISpringApplication {
-//     public port = 8100;
-// }
+@Application
+ class MyApplication implements ISpringApplication {
+     public port = 8100;
+     public session = {
+        secret: 'reboot',
+        resave: false,
+        saveUninitialized: true,
+        cookie: { secure: false }
+    };
+}
 
 
 // @Controller
 // class MyController {
-//     @Post("/hello")
-//     static go(req: any, res: any) {
-//         res.send("Hello");
+//   @Get("/hello")
+//   static go(req: any, res: any) {
+//     if (req.session.fadi) {
+//       req.session.fadi++;
+//     } else {
+//       req.session.fadi = 1;
 //     }
+//     res.send(req.session.fadi + "");
+//   }
+//   @Get("/h2")
+//   static go2(req: any, res: any) {
+//     if (req.session.fadi) {
+//       req.session.fadi++;
+//     } else {
+//       req.session.fadi = 1;
+//     }
+//     res.send(req.session.fadi + "");
+//   }
 // }
 
 // use (Tester);

@@ -1,4 +1,4 @@
-import { Application, IExpressApplication } from "./ExpressAnnotations";
+import { Application, IExpressApplication } from "./lib/ExpressAnnotations";
 import * as path from "path";
 
 @Application

@@ -1,9 +1,7 @@
-import {use} from "./ExpressAnnotations";
+import {use} from "./lib/ExpressAnnotations";
 import {MyApplication} from "./config";
-import {Akilasan} from "./controllers/akila";
-import Gregg from "./controllers/gregg";
+import home from "./controllers";
 
 
 use(MyApplication);
-use(Akilasan);
-use(Gregg);
+use(home);

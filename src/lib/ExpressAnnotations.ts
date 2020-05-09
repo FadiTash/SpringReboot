@@ -1,6 +1,7 @@
 import express = require("express"); 
 import session = require("express-session"); 
 import bodyParser = require("body-parser");
+import * as path from "path";
 enum RequestMethod {
     Get = 'get',
     Post = 'post',
@@ -26,6 +27,10 @@ class ExpressApplication {
         this.app.use(sesScope);
         this.app.set('view engine', 'pug');
         this.app.set('views', this.main.view);
+        // remove block below
+        console.log(path.join(__dirname, '../..', 'lib'));
+        this.app.use(express.static(path.join(__dirname, '../..', 'lib')))
+        // remove block above
         if(this.main && this.main.session){
             this.app.use(session(this.main.session));
         }

@@ -9,99 +9,131 @@ enum RequestMethod {
     Put = 'put',
 }
 
-enum Scope {
-    Application,
-    Session,
-    Request,
-}
-class DuplicateINameError extends Error {
-    public constructor(iName: string){
-        super(`This item ${iName} already exists as an Application scoped object`);
-    }
-}
-class InvalidINameError extends Error {
-    public constructor(iName: string){
-        super(`Session of ${iName} is not available in the container`);
-    }
-}
-class Container {
-    public applicationScope: {[key: string]: any} = {};
-    public sessionScope: {[key: string]: any} = {};
-    public requestScope: {[key: string]: any} = {};
-    public constructor() {
+// export enum Scope {
+//     Application,
+//     Session,
+//     Request,
+// }
 
-    }
+// class DuplicateINameError extends Error {
+//     public constructor(iName: string){
+//         super(`This item ${iName} already exists as an Application scoped object`);
+//     }
+// }
+// class InvalidINameError extends Error {
+//     public constructor(iName: string){
+//         super(`Session of ${iName} is not available in the container`);
+//     }
+// }
+// class Container {
+//     public applicationScope: {[key: string]: any} = {};
+//     public sessionScope: {[key: string]: any} = {};
+//     public requestScope: {[key: string]: any} = {};
+//     public constructor() {
 
-    public set(iName: string, Ob: any, scope?: Scope) {
-        let targetMap = this.applicationScope;
-        switch(scope){
-            case Scope.Session:
-                targetMap = this.sessionScope;
-                break;
-            case Scope.Request:
-                targetMap = this.requestScope;
-                break;
-            case Scope.Application:
-            default:
-                break;
-        }
-        if (targetMap[iName]) {
-          throw new DuplicateINameError(iName);
-        }
-        targetMap[iName] = Ob;
-    }
+//     }
 
-    public get(iName: string, scope?: Scope): any {
-        switch (scope) {
-          case Scope.Session:
-            if (this.sessionScope[iName]) {
-              throw new InvalidINameError(iName);
-            }
-            return this.sessionScope[iName];
-          case Scope.Request:
-            if (this.requestScope[iName]) {
-              throw new InvalidINameError(iName);
-            }
-            return new this.requestScope[iName]();
-          case Scope.Application:
-          default:
-            if (this.applicationScope[iName]) {
-              throw new InvalidINameError(iName);
-            }
-            return this.applicationScope[iName];
-        }
-    }
+//     public set(iName: string, Ob: any, scope?: Scope) {
+//         let targetMap = this.applicationScope;
+//         switch(scope){
+//             case Scope.Session:
+//                 targetMap = this.sessionScope;
+//                 break;
+//             case Scope.Request:
+//                 targetMap = this.requestScope;
+//                 break;
+//             case Scope.Application:
+//             default:
+//                 break;
+//         }
+//         if (targetMap[iName]) {
+//           throw new DuplicateINameError(iName);
+//         }
+//         targetMap[iName] = Ob;
+//     }
 
-    public getAs<T>(iName: string): T {
-        if (this.applicationScope[iName] === undefined) {
-            throw new Error ("Asset " + iName + " could not be aquired");
-        }
-        return (this.applicationScope[iName] as T);
-    } 
+//     public get(iName: string, scope?: Scope): any {
+//         switch (scope) {
+//           case Scope.Session:
+//             if (!this.sessionScope[iName]) {
+//               throw new InvalidINameError(iName);
+//             }
+//             return this.sessionScope[iName];
+//           case Scope.Request:
+//             if (!this.requestScope[iName]) {
+//               throw new InvalidINameError(iName);
+//             }
+//             return new this.requestScope[iName]();
 
-}
+//           case Scope.Application:
+//           default:
+//             if (!this.applicationScope[iName]) {
+//               throw new InvalidINameError(iName);
+//             }
+//             return this.applicationScope[iName];
+//         }
+//     }
 
-export const container = new Container();
+//     public getAs<T>(iName: string, scope?: Scope): T {
 
-export function ApplicationScope(iName?: string) {
-    return function(target: any) {
-        iName = iName || target.name;
-        iName = iName || "";
-        container.set(iName, new target());
-    }
-}
+//         switch (scope) {
+//             case Scope.Session:
+//               if (!this.sessionScope[iName]) {
+//                 throw new InvalidINameError(iName);
+//               }
+//               return this.sessionScope[iName] as T;
+//             case Scope.Request:
+//               if (!this.requestScope[iName]) {
+//                 throw new InvalidINameError(iName);
+//               }
+//               return new this.requestScope[iName]() as T;
+  
+//             case Scope.Application:
+//             default:
+//               if (!this.applicationScope[iName]) {
+//                 throw new InvalidINameError(iName);
+//               }
+//               return this.applicationScope[iName] as T;
+//           }
+//     } 
+
+// }
+
+// export const container = new Container();
+
+// export function ApplicationScope(iName?: string) {
+//     return function(target: any) {
+//         iName = iName || target.name;
+//         iName = iName || "";
+//         container.set(iName, new target());
+//     }
+// }
 
 // export function SessionScope(iName?: string){
 //     return function(target: any) {
 //         container.set()
 //     }
 // }
-export function RequestScope(iName?: string){
-    return function(target: any) {
-        iName = iName || target.name;
-        iName = iName || "";
-        container.set(iName, target, Scope.Request);
-    }
+// export function RequestScope(iName?: string){
+//     return function(target: any) {
+//         iName = iName || target.name;
+//         iName = iName || "";
+//         container.set(iName, target, Scope.Request);
+//     }
+// }
+
+
+type MiddleWare = (req: express.Request, res: express.Response, next: express.NextFunction) => void;
+
+
+
+const sesScope: MiddleWare = function (req, res, next) {
+    // const requestObjects: {[key: string]: string} = {};
+    // for (let item in container.requestScope) {
+    //     requestObjects[item] = new container.requestScope[item]();
+    // }
+    // req.body["session"] = requestObjects;
+    next();
 }
 
 class Spring {
@@ -113,6 +145,7 @@ class Spring {
         this.main = obj;
         const port = this.main ? this.main.port : 8080;
         this.app.use(bodyParser.json());
+        this.app.use(sesScope);
         if(this.main && this.main.session){
             this.app.use(session(this.main.session));
         }
@@ -131,8 +164,7 @@ export function Application(target: any) {
     springContainer.setApplication(new target());
 }
 
-export function Controller(target: any) {
-}
+export function Controller(target: any) {}
 
 export function Request(
          method: RequestMethod,

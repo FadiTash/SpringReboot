@@ -1,7 +1,6 @@
 import express = require("express"); 
 import session = require("express-session"); 
 import bodyParser = require("body-parser");
-import * as path from "path";
 enum RequestMethod {
     Get = 'get',
     Post = 'post',
@@ -11,13 +10,11 @@ enum RequestMethod {
 
 type MiddleWare = (req: express.Request, res: express.Response, next: express.NextFunction) => void;
 
-
-
 const sesScope: MiddleWare = function (req, res, next) {
     next();
 }
 
-class Spring {
+class ExpressApplication {
     public app: express.Application = express();
     private main: IExpressApplication | undefined; // call this configuration instead
     public container: {[key: string]: any} = {};
@@ -27,6 +24,8 @@ class Spring {
         const port = this.main ? this.main.port : 8080;
         this.app.use(bodyParser.json());
         this.app.use(sesScope);
+        this.app.set('view engine', 'pug');
+        this.app.set('views', this.main.view);
         if(this.main && this.main.session){
             this.app.use(session(this.main.session));
         }
@@ -39,10 +38,10 @@ class Spring {
     }
 }
 
-export const springContainer = new Spring();
+export const expressApplication = new ExpressApplication();
 
 export function Application(target: any) {
-    springContainer.setApplication(new target());
+    expressApplication.setApplication(new target());
 }
 
 export function Controller(target: any) {}
@@ -52,9 +51,7 @@ export function Request(
          route: string
        ) {
         return function (target: any, name: string, pd: PropertyDescriptor) {
-           const app = springContainer.app;
-           app.set('view engine', 'pug');
-           app.set('views', path.join(__dirname, '/../views/'));
+           const app = expressApplication.app;
            if (app !== undefined) {
              console.log("registered " + route);
              app[method](route, function(req, res) {
@@ -62,7 +59,7 @@ export function Request(
                 if ( ans.view ) {
                     res.render(ans.view, ans.param);
                 } else {
-                    res.send("ans");
+                    res.send(ans);
                 }
                
              });
@@ -82,6 +79,7 @@ export interface IExpressApplication {
     port: number;
     ssl?: {[key: string] : string};
     session?: any;
+    view: string;
 }
 
 export function use(target: any) {

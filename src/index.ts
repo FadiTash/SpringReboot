@@ -1,30 +1,9 @@
-import {Application, IExpressApplication, Controller, Get, Post} from "./ExpressAnnotations";
-import express = require("express");
+import {use} from "./ExpressAnnotations";
+import {MyApplication} from "./config";
+import {Akilasan} from "./controllers/akila";
+import Gregg from "./controllers/gregg";
 
-@Application
- class MyApplication implements IExpressApplication {
-     public port = 8100;
-     public session = {
-        secret: 'reboot',
-        resave: false,
-        saveUninitialized: true,
-        cookie: { secure: false }
-    };
-}
 
-@Controller
-class MyController {
-  @Get("/hello")
-  go(req: express.Request) {
-    return {
-        view:"hello",
-        param: {name: "Fadi"}
-    };
-  }
-
-  @Get("/audi")
-  go1(req: any) {
-    return "audi";
-  }
-  // res.render("view name", object)
-}
+use(MyApplication);
+use(Akilasan);
+use(Gregg);

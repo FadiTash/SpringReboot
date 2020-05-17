@@ -49,26 +49,51 @@ export function Application(target: any) {
     expressApplication.setApplication(new target());
 }
 
-export function Controller(target: any) {}
+interface RegistryObject {
+    route: string,
+    method: RequestMethodType,
+    value: (req: express.Request, res: express.Response) => void
+}
+
+const registry: {[key: string]: RegistryObject[]} = {};
+
+export function Controller(path?: string) {
+    return function(target: any) {
+        const controllerRegistry = registry[target.name];
+        const app = expressApplication.app;
+        for(let o in controllerRegistry) {
+           const entry = controllerRegistry[o];
+           if (path) {
+               entry.route = path + entry.route;
+           }
+            app[entry.method](entry.route, entry.value);
+        }
+    }
+}
+
+type RequestMethodType = "get" | "post" | "put" | "delete";
 
 export function Request(
          method: RequestMethod,
          route: string
        ) {
         return function (target: any, name: string, pd: PropertyDescriptor) {
-           const app = expressApplication.app;
-           if (app !== undefined) {
-             console.log("registered " + route);
-             app[method](route, function(req, res) {
-                const ans = target[name](req);
-                if ( ans.view ) {
-                    res.render(ans.view, ans.param);
-                } else {
-                    res.send(ans);
-                }
-               
-             });
-           }
+            if (!registry[target.constructor.name]) {
+                registry[target.constructor.name] = [];
+            }
+            registry[target.constructor.name].push({
+                route: route,
+                method: method as RequestMethodType,
+                value: function(req: any, res: any) {
+                    const ans = target[name](req);
+                    if ( ans.view ) {
+                        res.render(ans.view, ans.param);
+                    } else {
+                        res.send(ans);
+                    }
+                   
+                 }
+            });
        }
     }
 

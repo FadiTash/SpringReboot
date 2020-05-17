@@ -16,7 +16,8 @@ type RequestMethodType = "get" | "post" | "put" | "delete";
 interface RegistryObject {
     route: string,
     method: RequestMethodType,
-    value: (req: express.Request, res: express.Response) => void
+    value: (req: express.Request, res: express.Response) => void,
+    middleware?: MiddleWare
 }
 
 const registry: {[key: string]: RegistryObject[]} = {};
@@ -63,23 +64,33 @@ export function Application(target: any) {
     expressApplication.setApplication(new target());
 }
 
-export function Controller(path?: string) {
+const relayMiddleware: MiddleWare = function(req: express.Request, res: express.Response, next: express.NextFunction) {
+    // get the method that was called and retrieve its middleware
+    // execute that middle ware and run!
+    next();
+}
+
+export function Controller(path?: string, middleware?: MiddleWare) {
     return function(target: any) {
         const controllerRegistry = registry[target.name];
         const app = expressApplication.app;
+        const router = express.Router();
+        if (middleware) {
+            router.use(middleware);
+        }
+        router.use(relayMiddleware);
+        app.use(path || "/", router);
         for(let o in controllerRegistry) {
            const entry = controllerRegistry[o];
-           if (path) {
-               entry.route = path + entry.route;
-           }
-            app[entry.method](entry.route, entry.value);
+           router[entry.method](entry.route, entry.value);
         }
     }
 }
 
 export function Request(
          method: RequestMethod,
-         route: string
+         route: string,
+         middleware?: MiddleWare
        ) {
         return function (target: any, name: string, pd: PropertyDescriptor) {
             if (!registry[target.constructor.name]) {
@@ -96,7 +107,8 @@ export function Request(
                         res.send(ans);
                     }
                    
-                 }
+                 },
+                 middleware: middleware
             });
        }
     }

@@ -2,6 +2,7 @@ import express = require("express");
 import session = require("express-session"); 
 import bodyParser = require("body-parser");
 import * as path from "path";
+
 enum RequestMethod {
     Get = 'get',
     Post = 'post',
@@ -10,9 +11,25 @@ enum RequestMethod {
 }
 
 type MiddleWare = (req: express.Request, res: express.Response, next: express.NextFunction) => void;
+type RequestMethodType = "get" | "post" | "put" | "delete";
+
+interface RegistryObject {
+    route: string,
+    method: RequestMethodType,
+    value: (req: express.Request, res: express.Response) => void
+}
+
+const registry: {[key: string]: RegistryObject[]} = {};
 
 const sesScope: MiddleWare = function (req, res, next) {
     next();
+}
+
+export interface IExpressApplication {
+    port: number;
+    ssl?: {[key: string] : string};
+    session?: any;
+    view: string;
 }
 
 class ExpressApplication {
@@ -27,10 +44,7 @@ class ExpressApplication {
         this.app.use(sesScope);
         this.app.set('view engine', 'pug');
         this.app.set('views', this.main.view);
-        // remove block below
-        console.log(path.join(__dirname, '../..', 'lib'));
         this.app.use(express.static(path.join(__dirname, '../..', 'lib')))
-        // remove block above
         if(this.main && this.main.session){
             this.app.use(session(this.main.session));
         }
@@ -49,14 +63,6 @@ export function Application(target: any) {
     expressApplication.setApplication(new target());
 }
 
-interface RegistryObject {
-    route: string,
-    method: RequestMethodType,
-    value: (req: express.Request, res: express.Response) => void
-}
-
-const registry: {[key: string]: RegistryObject[]} = {};
-
 export function Controller(path?: string) {
     return function(target: any) {
         const controllerRegistry = registry[target.name];
@@ -70,8 +76,6 @@ export function Controller(path?: string) {
         }
     }
 }
-
-type RequestMethodType = "get" | "post" | "put" | "delete";
 
 export function Request(
          method: RequestMethod,
@@ -103,13 +107,6 @@ export function Get(route: string) {
 
 export function Post(route: string) {
   return Request(RequestMethod.Post, route);
-}
-
-export interface IExpressApplication {
-    port: number;
-    ssl?: {[key: string] : string};
-    session?: any;
-    view: string;
 }
 
 export function use(target: any) {
